@@ -85,6 +85,78 @@ describe("findAll", function () {
       },
     ]);
   });
+
+  test("filter with name should work", async function() {
+    const searchFilters = {name: "1"}
+    let companies = await Company.findAll(searchFilters);
+    expect(companies).toEqual([
+      {
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      }
+    ]);
+  });
+
+  test("filter with minEmployees should work", async function() {
+    const searchFilters = {minEmployees: 2}
+    let companies = await Company.findAll(searchFilters);
+    expect(companies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      },
+      {
+        handle: "c3",
+        name: "C3",
+        description: "Desc3",
+        numEmployees: 3,
+        logoUrl: "http://c3.img",
+      }
+    ]);
+  });
+
+  test("filter with maxEmployees should work", async function() {
+    const searchFilters = {maxEmployees: 2}
+    let companies = await Company.findAll(searchFilters);
+    expect(companies).toEqual([
+      {
+        handle: "c1",
+        name: "C1",
+        description: "Desc1",
+        numEmployees: 1,
+        logoUrl: "http://c1.img",
+      },
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      }
+    ]);
+  });
+
+  test("filter with two fields should work", async function() {
+    const searchFilters = {minEmployees:2, maxEmployees: 2}
+    let companies = await Company.findAll(searchFilters);
+    expect(companies).toEqual([
+      {
+        handle: "c2",
+        name: "C2",
+        description: "Desc2",
+        numEmployees: 2,
+        logoUrl: "http://c2.img",
+      }
+    ]);
+  });
+
+  
 });
 
 /************************************** get */

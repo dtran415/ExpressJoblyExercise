@@ -45,19 +45,53 @@ class Company {
   }
 
   /** Find all companies.
-   *
+   * @param {object} searchFilters An object containing search filter parameters
+   * @example 
+   * {"name": "net", "minEmployees":3, "maxEmployees":6}
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
-    const companiesRes = await db.query(
+  static async findAll(searchFilters = {}) {
+    let query = 
           `SELECT handle,
                   name,
                   description,
                   num_employees AS "numEmployees",
                   logo_url AS "logoUrl"
-           FROM companies
-           ORDER BY name`);
+           FROM companies`;
+    const {name, minEmployees, maxEmployees} = searchFilters;
+    const whereClauses = [];
+    const whereValues = [];
+
+    if (minEmployees > maxEmployees) {
+      throw new BadRequestError("minEmployees cannot be less than maxEmployees");
+    }
+
+    if (name) {
+      whereValues.push(`%${name}%`);
+      whereClauses.push(`name ILIKE $${whereValues.length}`);
+    }
+
+    if (minEmployees) {
+      whereValues.push(minEmployees);
+      whereClauses.push(`num_employees >= $${whereValues.length}`);
+    }
+
+    if (maxEmployees) {
+      whereValues.push(maxEmployees);
+      whereClauses.push(`num_employees <= $${whereValues.length}`);
+    }
+
+    if (whereValues.length > 0) {
+      query += " WHERE " + whereClauses.join(" AND ");
+    }
+
+    query += " ORDER BY name";
+
+    console.log("query: " + query);
+    console.log("values: " + whereValues)
+    const companiesRes = await db.query(query, whereValues);
+
     return companiesRes.rows;
   }
 
