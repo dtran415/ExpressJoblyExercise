@@ -95,7 +95,7 @@ class Company {
   /** Given a company handle, return data about company.
    *
    * Returns { handle, name, description, numEmployees, logoUrl, jobs }
-   *   where jobs is [{ id, title, salary, equity, companyHandle }, ...]
+   *   where jobs is [{ id, title, salary, equity}, ...]
    *
    * Throws NotFoundError if not found.
    **/
@@ -106,14 +106,35 @@ class Company {
                   name,
                   description,
                   num_employees AS "numEmployees",
-                  logo_url AS "logoUrl"
-           FROM companies
+                  logo_url AS "logoUrl",
+                  id, title, salary, equity, company_handle as companyHandle
+           FROM companies c
+           LEFT JOIN jobs j
+            ON c.handle=j.company_handle
            WHERE handle = $1`,
         [handle]);
 
-    const company = companyRes.rows[0];
+    const firstRow = companyRes.rows[0];
+    if (!firstRow) throw new NotFoundError(`No company: ${handle}`);
 
-    if (!company) throw new NotFoundError(`No company: ${handle}`);
+    const company = {
+      handle: firstRow.handle,
+      name: firstRow.name,
+      description: firstRow.description,
+      numEmployees: firstRow.numEmployees,
+      logoUrl: firstRow.logoUrl
+    }
+
+    company.jobs = [];
+    for (let row of companyRes.rows) {
+      const job = {
+        id: row.id,
+        title: row.title,
+        salary: row.salary,
+        equity: row.equity
+      }
+      company.jobs.push(job);
+    }
 
     return company;
   }
