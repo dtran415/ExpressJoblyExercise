@@ -87,9 +87,6 @@ class Company {
     }
 
     query += " ORDER BY name";
-
-    console.log("query: " + query);
-    console.log("values: " + whereValues)
     const companiesRes = await db.query(query, whereValues);
 
     return companiesRes.rows;
