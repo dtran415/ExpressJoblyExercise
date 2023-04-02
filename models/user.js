@@ -8,6 +8,7 @@ const {
   BadRequestError,
   UnauthorizedError,
 } = require("../expressError");
+const Job = require("./job");
 
 const { BCRYPT_WORK_FACTOR } = require("../config.js");
 
@@ -125,19 +126,35 @@ class User {
 
   static async get(username) {
     const userRes = await db.query(
-          `SELECT username,
+          `SELECT u.username,
                   first_name AS "firstName",
                   last_name AS "lastName",
                   email,
-                  is_admin AS "isAdmin"
-           FROM users
-           WHERE username = $1`,
+                  is_admin AS "isAdmin",
+                  j.id as "jobId"
+           FROM users u
+           LEFT JOIN applications a ON u.username=a.username
+           LEFT JOIN jobs j ON j.id=a.job_id
+           WHERE u.username = $1`,
         [username],
     );
 
-    const user = userRes.rows[0];
+    const firstRow = userRes.rows[0];
+    if (!firstRow) throw new NotFoundError(`No user: ${username}`);
+    
+    const user = {
+      username: firstRow.username,
+      firstName: firstRow.firstName,
+      lastName: firstRow.lastName,
+      email: firstRow.email,
+      isAdmin: firstRow.isAdmin
+    }
 
-    if (!user) throw new NotFoundError(`No user: ${username}`);
+    user.jobs = [];
+    for (let row of userRes.rows) {
+      if (row.jobId)
+        user.jobs.push(row.jobId);
+    }
 
     return user;
   }
@@ -203,6 +220,16 @@ class User {
     const user = result.rows[0];
 
     if (!user) throw new NotFoundError(`No user: ${username}`);
+  }
+
+  /** apply for a job for user; returns jobId */
+  static async applyForJob(username, jobId) {
+    await User.get(username); // throws NotFoundError if no username
+    await Job.get(jobId); // throws NotFoundError if no jobId
+
+    const result = await db.query(`INSERT INTO applications (username, job_id) VALUES ($1, $2) RETURNING job_id`, [username, jobId])
+
+    return result.rows[0].job_id;
   }
 }
 

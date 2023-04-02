@@ -127,13 +127,16 @@ class Company {
 
     company.jobs = [];
     for (let row of companyRes.rows) {
-      const job = {
-        id: row.id,
-        title: row.title,
-        salary: row.salary,
-        equity: row.equity
+      if (row.id) {
+        const job = {
+          id: row.id,
+          title: row.title,
+          salary: row.salary,
+          equity: row.equity
+        }
+
+        company.jobs.push(job);
       }
-      company.jobs.push(job);
     }
 
     return company;

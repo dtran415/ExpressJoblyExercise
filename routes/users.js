@@ -11,6 +11,7 @@ const User = require("../models/user");
 const { createToken } = require("../helpers/tokens");
 const userNewSchema = require("../schemas/userNew.json");
 const userUpdateSchema = require("../schemas/userUpdate.json");
+const Job = require("../models/job");
 
 const router = express.Router();
 
@@ -118,5 +119,22 @@ router.delete("/:username", ensureLoggedIn, async function (req, res, next) {
   }
 });
 
+/**
+ * Apply for a job with user
+ * POST /:username/jobs/:id => {applied: [jobId]}
+ * 
+ * Authorization: correct user or admin
+ */
+router.post("/:username/jobs/:id", ensureAdminOrCorrectUser, async function (req, res, next) {
+  try {
+    const user = await User.get(req.params.username);
+    const job = await Job.get(req.params.id);
+
+    const jobId = await User.applyForJob(user.username, job.id);
+    return res.json({ applied: jobId });
+  } catch (err) {
+    return next(err);
+  }
+});
 
 module.exports = router;
